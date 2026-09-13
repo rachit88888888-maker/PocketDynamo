@@ -35,16 +35,17 @@ public class Main {
     private static BufferedReader fileReader;
     private static BufferedWriter fileWriter;
     static void main() throws IOException {
+        Path walPath = Path.of("pocketdynamo.wal");
 
-        if (Files.notExists(Path.of("pocketdynamo.db"))) {
+        if (Files.notExists(walPath)) {
             try (ObjectOutputStream oos =
-                         new ObjectOutputStream(Files.newOutputStream(Path.of("pocketdynamo.db")))) {
+                         new ObjectOutputStream(Files.newOutputStream(walPath))) {
                 oos.writeObject(new HashMap<String, String>());
             }
         }
 
-        ObjectInputStream ois = new ObjectInputStream(new FileInputStream("pocketdynamo.db"));
-        ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("pocketdynamo.db"));
+        ObjectInputStream ois = new ObjectInputStream(Files.newInputStream(walPath));
+        ObjectOutputStream oos = new ObjectOutputStream(Files.newOutputStream(walPath));
         fileWriter = new BufferedWriter(new OutputStreamWriter(oos));
         ConcurrentHashMap<String, String> map = new ConcurrentHashMap();
 
