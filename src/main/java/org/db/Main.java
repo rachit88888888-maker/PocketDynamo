@@ -5,6 +5,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -38,19 +39,20 @@ public class Main {
         Path walPath = Path.of("pocketdynamo.wal");
 
         if (Files.notExists(walPath)) {
-            try (ObjectOutputStream oos =
-                         new ObjectOutputStream(Files.newOutputStream(walPath))) {
-                oos.writeObject(new HashMap<String, String>());
-            }
+            Files.createFile(walPath);
         }
 
-        ObjectInputStream ois = new ObjectInputStream(Files.newInputStream(walPath));
-        ObjectOutputStream oos = new ObjectOutputStream(Files.newOutputStream(walPath));
-        fileWriter = new BufferedWriter(new OutputStreamWriter(oos));
+        fileWriter = Files.newBufferedWriter(
+                walPath,
+                StandardOpenOption.APPEND
+        );
+        fileReader = Files.newBufferedReader(walPath);
+
+
         ConcurrentHashMap<String, String> map = new ConcurrentHashMap();
 
         System.out.println("DB Starting up ....");
-        performStartup(ois, map);
+        performStartup( map);
 
 
 
@@ -63,8 +65,8 @@ public class Main {
             System.out.println("Error handling operations");
         }finally {
             System.out.println("Flushing and closing");
-            oos.flush();
-            oos.close();
+            fileWriter.flush();
+            fileWriter.close();
         }
     }
 
@@ -141,9 +143,9 @@ public class Main {
         bufferedWriter.flush();
     }
 
-    private static void performStartup(ObjectInputStream ois, ConcurrentHashMap<String, String> map) throws IOException {
+    private static void performStartup(ConcurrentHashMap<String, String> map) throws IOException {
 
-        fileReader = new BufferedReader(new InputStreamReader(ois));
+
         String line;
         while((line = fileReader.readLine()) != null){
             loadMap(line, map);
@@ -200,6 +202,7 @@ public class Main {
                     String value = args[2];
                     map.put(args[1], value);
                     fileWriter.write(command);
+                    fileWriter.newLine();
                     break;
                 case GET:
                     response =  map.getOrDefault(args[1], "");
@@ -207,6 +210,7 @@ public class Main {
                 case DEL:
                     map.remove(args[1]);
                     fileWriter.write(command);
+                    fileWriter.newLine();
                     break;
             }
             return response;
