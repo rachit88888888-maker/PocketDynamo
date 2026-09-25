@@ -7,6 +7,8 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 public class ProtocolSocketTest {
 
     private static String send(String line) throws IOException {
@@ -38,16 +40,18 @@ public class ProtocolSocketTest {
     @Test
     void spacedValueRoundTrips() throws IOException {
         List<String> response =  ProtocolSocketTest.sendAll("SET KEY VALUE IS GREAT", "GET KEY");
-        assert "VALUE IS GREAT".equals(response.get(1));
+        assertEquals("VALUE IS GREAT", response.get(1));
+
     }
 
     @Test
     void doubleSpaceRejected() throws IOException {
-        assert "Invalid command".equals(ProtocolSocketTest.send("GET  A  B"));
+        assertEquals("Key cannot be empty", ProtocolSocketTest.send("SET  A  B"));
     }
 
     @Test
     void getWithExtraArgsRejected() throws IOException {
-       assert "GET does not accept a value".equals(ProtocolSocketTest.send("GET A B"));
+        assertEquals("GET does not accept a value", ProtocolSocketTest.send("GET A B"));
+
     }
 }

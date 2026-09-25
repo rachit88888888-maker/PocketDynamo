@@ -40,7 +40,10 @@ public class Operation implements Serializable {
     public void validate() throws IllegalArgumentException {
         switch (command) {
             case SET:
-                if (key == null || value == null) {
+                if(key==null || key.trim().equals("")){
+                    throw new IllegalArgumentException("Key cannot be empty");
+                }
+                if ( value == null) {
                     throw new IllegalArgumentException("SET requires key and value");
                 }
                 break;
