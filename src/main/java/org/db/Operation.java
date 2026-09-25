@@ -45,6 +45,9 @@ public class Operation implements Serializable {
                 }
                 break;
             case GET:
+                if(value != null){
+                    throw new IllegalArgumentException("GET does not accept a value");
+                }
             case DEL:
                 if (key == null) {
                     throw new IllegalArgumentException(command + " requires a key");
