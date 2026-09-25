@@ -9,26 +9,13 @@ import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static org.db.Main.Command.*;
+import static org.db.Command.*;
 
 
 public class Main {
-    public enum Command {
-        SET("Store a value"),
-        GET("Retrieve a value"),
-        DEL("Delete a value"),
-        EXIT("Gracefully shutdown");
 
-        private final String description;
 
-        Command(String description) {
-            this.description = description;
-        }
 
-        public String getDescription() {
-            return description;
-        }
-    }
 
     private static BufferedWriter clientWriter;
     private static BufferedReader clientReader;
@@ -152,45 +139,20 @@ public class Main {
         }
     }
     private static void loadMap(String line, ConcurrentHashMap<String, String> map) {
-        Command operation = Command.valueOf(line.split(" ")[0]);
-        if(SET.equals(operation)){
-            map.put(line.split(" ")[1], line.split(" ")[2]);
+        Operation op = Operation.parse(line);
+        if(SET.equals(op.getCommand())){
+            map.put(op.getKey(), op.getValue());
         }else{
-            map.remove(line.split(" ")[1]);
+            map.remove(op.getKey());
         }
     }
 
-    private static void isValidCommand(String command) {
-        boolean isValid = true;
 
-        Command operation = null;
-        try{
-             operation = Command.valueOf(command.split(" ")[0]);
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Invalid command");
-        }
-        String[] args = command.split(" ");
-
-
-
-
-        if(SET.equals(operation)){
-            isValid =  args.length == 3;
-        }
-        if(GET.equals(operation) || DEL.equals(operation)){
-            isValid =  args.length == 2;
-        }
-
-
-        if(!isValid){
-            throw new IllegalArgumentException("Invalid command / Wrong number of arguments");
-        }
-    }
 
     private static String executeCommand(String command, ConcurrentHashMap<String, String> map) throws IOException {
-        isValidCommand(command);
-        Command operation = Command.valueOf(command.split(" ")[0]);
-        String[] args = command.split(" ");
+        Operation op = Operation.parse(command);
+
+        Command operation = op.getCommand();
 
         String response = "OK";
         switch (operation) {
@@ -199,18 +161,20 @@ public class Main {
                     break;
                 case SET:
 
-                    String value = args[2];
-                    map.put(args[1], value);
-                    fileWriter.write(command);
+
+                    map.put(op.getKey(), op.getValue());
+                    fileWriter.write(op.getLine());
                     fileWriter.newLine();
+                    fileWriter.flush();
                     break;
                 case GET:
-                    response =  map.getOrDefault(args[1], "");
+                    response =  map.getOrDefault(op.getKey(), "");
                     break;
                 case DEL:
-                    map.remove(args[1]);
-                    fileWriter.write(command);
+                    map.remove(op.getKey());
+                    fileWriter.write(op.getLine());
                     fileWriter.newLine();
+                    fileWriter.flush();
                     break;
             }
             return response;
